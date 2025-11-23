@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Navbar from "../components/navbar";
+import { createFolder } from "../api";
 // import server methods later
 // import { createFolder, createFile, getUserFolders, getUserFiles } from "../api";
 
@@ -14,6 +15,7 @@ export default function Home() {
   const handleCreateFolder = (e) => {
     e.preventDefault();
     if (!newFolderName) return;
+    createFolder(newFolderName);
 
     const newFolder = { id: Date.now(), name: newFolderName };
     setFolders([...folders, newFolder]);

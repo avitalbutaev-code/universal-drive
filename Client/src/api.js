@@ -1,8 +1,20 @@
 // api.js
 // Here you will later import axios or fetch to talk to your Express server
+const BASE_URL = "http://localhost:3000";
 
 export async function getUserFolders() {
-  // TODO: call server: GET /folders
+  const res = await fetch(`${BASE_URL}/users/1`);
+  return res.json();
+}
+// TODO: call server: GET /folders
+
+export async function createFolder(foldername) {
+  const res = await fetch(`${BASE_URL}/users/1`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path: foldername }),
+  });
+  return res.json();
 }
 
 export async function getFolderContent(folderId) {
@@ -12,7 +24,14 @@ export async function getFolderContent(folderId) {
 export async function getFile(fileId) {
   // TODO: call server: GET /files/:id
 }
-
+export async function deleteFolder(foldername) {
+  const res = await fetch(`${BASE_URL}/users/1`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path: foldername }),
+  });
+  return res.json();
+}
 export async function deleteFile(fileId) {
   // TODO: call server: DELETE /files/:id
 }
