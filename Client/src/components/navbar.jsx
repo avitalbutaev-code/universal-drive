@@ -23,8 +23,7 @@ export default function Navbar() {
       <Link to={`/${user}/home`}>Home</Link>
       <Link to={`/${user}/home/folder`}>Folders</Link>
       <Link to={`/${user}/home/bin`}>Bin</Link>
-      <Link to="/">Login</Link>
-      <Link to="/register">Register</Link>
+      <Link to="/">logout</Link>
     </nav>
   );
 }

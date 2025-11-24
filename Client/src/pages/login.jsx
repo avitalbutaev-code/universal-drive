@@ -44,12 +44,12 @@
 // }
 
 import { useState } from "react";
-// import { loginUser } from "../api";
+import { loginUser } from "../api";
 import { useNavigate } from "react-router-dom";
 
 export default function Login() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ username: "", password: "" });
+  const [form, setForm] = useState({ name: "", password: "" });
 
   function update(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -58,14 +58,9 @@ export default function Login() {
   async function submit(e) {
     e.preventDefault();
 
-    // TODO: call server POST /auth/login
-    // const userData = await loginUser(form);
-    const userData = { username: form.username, id: "temp-id" };
-    localStorage.setItem("currentUser", JSON.stringify(userData));
+    await loginUser(form);
+    const userData = { name: form.name, id: "" };
 
-    // For now, simulate successful login:
-
-    // Navigate to Home and pass user as state
     navigate("/home", { state: { user: userData } });
   }
 
@@ -74,7 +69,7 @@ export default function Login() {
       <form onSubmit={submit} style={{ maxWidth: "300px", margin: "auto" }}>
         <h1>Login</h1>
         <label>username</label>
-        <input name="text" onChange={update} value={form.username} />
+        <input name="name" onChange={update} value={form.username} />
         <br />
         <label>Password</label>
         <input
