@@ -1,169 +1,239 @@
-// import { useState, useEffect } from "react";
-// import { Link, Outlet } from "react-router-dom";
-// import Navbar from "../components/navbar";
-// import { createFolder, getUserFolders, deleteFolder } from "../api";
-
-// export default function Home() {
-//   const [folders, setFolders] = useState([]);
-//   const [files, setFiles] = useState([]);
-//   const [newFolderName, setNewFolderName] = useState("");
-//   const [newFileName, setNewFileName] = useState("");
-
-//   useEffect(() => {
-//     async function load() {
-//       const data = await getUserFolders(); // TODO: server GET
-//       await setFolders(data);
-//     }
-//     load();
-//   }, []);
-
-//   // Create a new folder
-//   const handleCreateFolder = async (e) => {
-//     e.preventDefault();
-//     if (!newFolderName) return;
-//     createFolder(newFolderName); // TODO: server POST
-//     const newFolder = { id: Date.now(), name: newFolderName };
-//     await setFolders([...folders, newFolder]);
-//     setNewFolderName("");
-//   };
-
-//   // Create a new file
-//   const handleCreateFile = (e) => {
-//     e.preventDefault();
-//     if (!newFileName) return;
-
-//     const newFile = { id: Date.now(), name: newFileName };
-//     setFiles([...files, newFile]);
-//     setNewFileName("");
-
-//     // TODO: server POST
-//   };
-
-//   // Delete folder
-//   const handleDeleteFolder = (folderName) => {
-//     deleteFolder(folderName); // TODO: server DELETE
-
-//     setFolders(folders.filter((f) => f.name !== folderName));
-//   };
-
-//   return (
-//     <div>
-//       {" "}
-//       <Navbar />
-//       <div style={{ maxWidth: "600px", margin: "auto" }}>
-//         <h1>Home</h1>
-
-//         {/* ------------------ CREATE FOLDER ------------------ */}
-//         <form onSubmit={handleCreateFolder} style={{ marginBottom: "20px" }}>
-//           <input
-//             placeholder="New folder name"
-//             value={newFolderName}
-//             onChange={(e) => setNewFolderName(e.target.value)}
-//           />
-//           <button>Create Folder</button>
-//         </form>
-
-//         {/* ------------------ CREATE FILE ------------------ */}
-//         <form onSubmit={handleCreateFile} style={{ marginBottom: "20px" }}>
-//           <input
-//             placeholder="New file name"
-//             value={newFileName}
-//             onChange={(e) => setNewFileName(e.target.value)}
-//           />
-//           <button>Create File</button>
-//         </form>
-
-//         {/* ------------------ FOLDERS LIST ------------------ */}
-//         <h2>Folders</h2>
-//         {folders.length === 0 ? (
-//           <p>No folders yet</p>
-//         ) : (
-//           <ul>
-//             {folders.map((f) => (
-//               <li key={f.id} style={{ marginBottom: "10px" }}>
-//                 <Link to={`/folders/${f.id}`}>{f.name}</Link>
-//                 <button
-//                   style={{ marginLeft: "10px" }}
-//                   onClick={() => handleDeleteFolder(f.name)}
-//                 >
-//                   DELETE
-//                 </button>
-//               </li>
-//             ))}
-//           </ul>
-//         )}
-
-//         {/* ------------------ FILES LIST ------------------ */}
-//         {/* <h2>Files</h2>
-//         {files.length === 0 ? (
-//           <p>No files yet</p>
-//         ) : (
-//           <ul>
-//             {files.map((f) => (
-//               <li key={f.id}>{f.name}</li>
-//             ))}
-//           </ul>
-//         )} */}
-//       </div>
-//       <Outlet />
-//     </div>
-//   );
-// }
-// src/pages/Home.js
-import React, { useState, useEffect } from "react";
-import { getFolder, deleteFile } from "../api";
+import React, { useState, useEffect, useRef } from "react";
+import {
+  getFolder,
+  createFolder,
+  deleteFolder,
+  deleteFile,
+  getFileInfo,
+  renameItem,
+  copyItem,
+  moveItem,
+  downloadFile,
+  uploadFile,
+} from "../api";
 import Folder from "../components/folder";
 import File from "../components/file";
+import Breadcrumbs from "../components/breadcrumbs";
 
-export default function Home() {
-  const [folders, setFolders] = useState([]);
-  const [files, setFiles] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+export default function Home({ user }) {
+  const [items, setItems] = useState([]);
+  const [currentPath, setCurrentPath] = useState("");
+  const [selected, setSelected] = useState(null);
+  const [info, setInfo] = useState(null);
+  const [clipboard, setClipboard] = useState(null);
+  const fileInputRef = useRef(null);
 
-  const userId = 1;
-
-  const loadFolder = async (path = "") => {
-    setLoading(true);
-    setError(null);
+  const refresh = async () => {
     try {
-      const items = await getFolder(userId, path);
-      setFolders(items.filter((i) => i.type === "folder"));
-      setFiles(items.filter((i) => i.type === "file"));
+      const data = await getFolder(user.id, currentPath);
+      setItems(data);
     } catch (err) {
-      setError(err);
-    } finally {
-      setLoading(false);
+      console.error(err);
     }
   };
-
   useEffect(() => {
-    loadFolder();
-  }, []);
+    refresh();
+    setSelected(null);
+  }, [currentPath]);
 
-  const handleDeleteFile = async (file) => {
-    if (!window.confirm(`Delete ${file.name}?`)) return;
-    try {
-      await deleteFile(userId, file.name);
-      loadFolder();
-    } catch (err) {
-      alert(err);
+  const handleCreate = async () => {
+    const name = prompt("Folder Name:");
+    if (name) {
+      await createFolder(user.id, currentPath, name);
+      refresh();
+    }
+  };
+  const handleDelete = async () => {
+    if (!selected || !window.confirm(`Delete ${selected.name}?`)) return;
+    const path = currentPath
+      ? `${currentPath}/${selected.name}`
+      : selected.name;
+    selected.type === "folder"
+      ? await deleteFolder(user.id, path)
+      : await deleteFile(user.id, path);
+    refresh();
+  };
+  const handleRename = async () => {
+    const name = prompt("New Name:", selected?.name);
+    if (!name || !selected) return;
+    const path = currentPath
+      ? `${currentPath}/${selected.name}`
+      : selected.name;
+    await renameItem(user.id, path, name);
+    refresh();
+  };
+  const handleCopyMove = (type) => {
+    if (!selected) return;
+    setClipboard({
+      type,
+      path: currentPath ? `${currentPath}/${selected.name}` : selected.name,
+      name: selected.name,
+    });
+  };
+  const handlePaste = async () => {
+    if (!clipboard) return;
+    clipboard.type === "copy"
+      ? await copyItem(user.id, clipboard.path, currentPath)
+      : await moveItem(user.id, clipboard.path, currentPath);
+    setClipboard(null);
+    refresh();
+  };
+  const handleUpload = async (e) => {
+    if (e.target.files[0]) {
+      await uploadFile(user.id, currentPath, e.target.files[0]);
+      refresh();
+    }
+    e.target.value = null;
+  };
+  const handleDownload = async () => {
+    if (selected?.type === "file") {
+      const path = currentPath
+        ? `${currentPath}/${selected.name}`
+        : selected.name;
+      await downloadFile(user.id, path, selected.name);
+    }
+  };
+  const handleInfo = async () => {
+    if (selected?.type === "file") {
+      const path = currentPath
+        ? `${currentPath}/${selected.name}`
+        : selected.name;
+      setInfo(await getFileInfo(user.id, path));
     }
   };
 
   return (
-    <div style={{ padding: 20 }}>
-      <h2>Home</h2>
-      {loading && <div>Loading...</div>}
-      {error && <div style={{ color: "red" }}>{error}</div>}
-      <div>
-        {folders.map((f) => (
-          <Folder key={f.name} folder={f} onClick={() => loadFolder(f.name)} />
-        ))}
-        {files.map((f) => (
-          <File key={f.name} file={f} onClick={() => handleDeleteFile(f)} />
-        ))}
+    <div
+      style={{ padding: 20, fontFamily: "sans-serif" }}
+      onClick={() => setSelected(null)}
+    >
+      <div
+        style={{
+          display: "flex",
+          gap: 10,
+          alignItems: "center",
+          marginBottom: 20,
+        }}
+      >
+        <div
+          style={{
+            flexGrow: 1,
+            padding: 8,
+            border: "1px solid #ccc",
+            borderRadius: 4,
+          }}
+        >
+          <Breadcrumbs currentPath={currentPath} onNavigate={setCurrentPath} />
+        </div>
+        <button onClick={() => fileInputRef.current.click()} style={btnStyle}>
+          ☁ Upload
+        </button>
+        <input type="file" ref={fileInputRef} hidden onChange={handleUpload} />
+        <button onClick={handleCreate} style={btnStyle}>
+          + Folder
+        </button>
       </div>
+
+      <div
+        style={{
+          padding: 10,
+          background: "#f5f5f5",
+          borderRadius: 8,
+          marginBottom: 20,
+          display: "flex",
+          gap: 10,
+          alignItems: "center",
+        }}
+      >
+        {clipboard && (
+          <button
+            onClick={handlePaste}
+            style={{ ...btnStyle, border: "2px solid orange" }}
+          >
+            📋 Paste {clipboard.name}
+          </button>
+        )}
+        {selected ? (
+          <>
+            <span style={{ fontWeight: "bold" }}>{selected.name}</span>
+            <button onClick={handleRename} style={btnStyle}>
+              Rename
+            </button>
+            <button onClick={() => handleCopyMove("copy")} style={btnStyle}>
+              Copy
+            </button>
+            <button onClick={() => handleCopyMove("move")} style={btnStyle}>
+              Cut
+            </button>
+            <button
+              onClick={handleDelete}
+              style={{ ...btnStyle, color: "red" }}
+            >
+              Delete
+            </button>
+            {selected.type === "file" && (
+              <>
+                <button onClick={handleInfo} style={btnStyle}>
+                  Info
+                </button>
+                <button onClick={handleDownload} style={btnStyle}>
+                  Download
+                </button>
+              </>
+            )}
+          </>
+        ) : (
+          <span style={{ color: "#999" }}>Select item for actions</span>
+        )}
+      </div>
+
+      <div style={{ display: "flex", flexWrap: "wrap" }}>
+        {items.map((i) =>
+          i.type === "folder" ? (
+            <Folder
+              key={i.name}
+              item={i}
+              selected={selected?.name === i.name}
+              onSelect={setSelected}
+              onNavigate={(n) =>
+                setCurrentPath(currentPath ? `${currentPath}/${n}` : n)
+              }
+            />
+          ) : (
+            <File
+              key={i.name}
+              item={i}
+              selected={selected?.name === i.name}
+              onSelect={setSelected}
+            />
+          )
+        )}
+      </div>
+
+      {info && (
+        <div
+          style={{
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%,-50%)",
+            background: "white",
+            padding: 30,
+            border: "1px solid #000",
+          }}
+        >
+          <h3>Info</h3>
+          <p>Size: {info.size}</p>
+          <p>Created: {info.created}</p>
+          <button onClick={() => setInfo(null)}>Close</button>
+        </div>
+      )}
     </div>
   );
 }
+const btnStyle = {
+  padding: "6px 12px",
+  cursor: "pointer",
+  borderRadius: 4,
+  border: "1px solid #ccc",
+};

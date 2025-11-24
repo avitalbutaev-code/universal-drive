@@ -3,23 +3,22 @@ var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 var cors = require("cors");
-var loginRouter = require("./routes/login");
-var usersRouter = require("./routes/users");
-var app = express();
-app.use(cors());
-var register = require("./routes/register");
 
+var app = express();
+
+app.use(cors());
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
-app.use("/", loginRouter);
-// app.use("/users", usersRouter);
-app.use("/files", require("./routes/files"));
-app.use("/:id/folders", require("./routes/folders"));
-app.use("/login", loginRouter);
-app.use("/users", usersRouter);
-app.use("/register", register);
+// Auth Routes
+app.use("/login", require("./routes/login"));
+app.use("/register", require("./routes/register"));
+
+// API Routes (Protected by ID)
+app.use("/api/users/:id/files", require("./routes/files"));
+app.use("/api/users/:id/folders", require("./routes/folders"));
+
 module.exports = app;

@@ -5,11 +5,9 @@ import { useNavigate } from "react-router-dom";
 export default function Register() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: "", password: "" });
-
   function update(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
-
   async function submit(e) {
     e.preventDefault();
     try {

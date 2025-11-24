@@ -1,49 +1,51 @@
-// // App.jsx
-// import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-// import Home from "./pages/home";
-// import Folder from "./pages/folder";
-// import File from "./pages/file";
-// import Bin from "./pages/bin";
-// import Login from "./pages/login";
-// import Register from "./pages/register";
-// import Navbar from "./components/navbar";
-
-// export default function App() {
-//   return (
-//     <BrowserRouter>
-//       <Routes>
-//         <Route path="/" element={<Login />} />
-//         <Route path="/register" element={<Register />} />
-
-//         {/* Home layout with nested routes */}
-//         <Route path="/home" element={<Home />}>
-//           <Route path="folder/:folderId" element={<Folder />} />
-//           <Route path="file/:fileId" element={<File />} />
-//           <Route path="bin" element={<Bin />} />
-//         </Route>
-
-//         <Route path="*" element={<Navigate to="/" />} />
-//       </Routes>
-//     </BrowserRouter>
-//   );
-// }
-// src/App.js
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import Login from "./pages/login";
+import Register from "./pages/register";
 import Home from "./pages/home";
-import Bin from "./pages/bin";
 import NavBar from "./components/navbar";
 
-function App() {
+export default function App() {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    async function handleSaved() {
+      const saved = localStorage.getItem("drive_user");
+      if (saved) await setUser(JSON.parse(saved));
+    }
+    handleSaved();
+  }, []);
+
+  const handleLogin = (u) => {
+    setUser(u);
+    localStorage.setItem("drive_user", JSON.stringify(u));
+  };
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem("drive_user");
+  };
+
   return (
     <Router>
-      <NavBar />
+      {user && <NavBar username={user.username} onLogout={handleLogout} />}
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/bin" element={<Bin />} />
+        <Route
+          path="/"
+          element={
+            user ? <Navigate to="/drive" /> : <Login onLogin={handleLogin} />
+          }
+        />
+        <Route path="/register" element={<Register onLogin={handleLogin} />} />
+        <Route
+          path="/drive"
+          element={user ? <Home user={user} /> : <Navigate to="/" />}
+        />
       </Routes>
     </Router>
   );
 }
-
-export default App;

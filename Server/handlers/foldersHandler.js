@@ -1,91 +1,46 @@
 const fs = require("fs/promises");
 const path = require("path");
+const { getSecurePath } = require("./pathUtils");
 
-const BASE_PATH = path.join(__dirname, "../../Database/UsersFolders");
-
-function getUserRoot(id) {
-  return path.join(BASE_PATH, id);
-}
-
-function showFolder(req, res) {
+async function showFolder(req, res) {
   const { id } = req.params;
-  console.log("id: ", id);
-
   const { path: folderPath = "" } = req.body;
-  console.log("folderPath: ", folderPath);
-
-  fs.readdir(path.join(getUserRoot(id), folderPath), { withFileTypes: true })
-    .then((items) => {
-      const result = items.map((item) => ({
-        name: item.name,
-        type: item.isDirectory() ? "folder" : "file",
-      }));
-      res.json(result);
-    })
-    .catch((err) => {
-      console.error(err);
-      res.status(500).json({ error: "Failed to load folder" });
-    });
-}
-
-async function renameFolder(req, res) {
-  const { id } = req.params;
-  const { oldPath, newName } = req.body;
 
   try {
-    const oldFull = path.join(getUserRoot(id), oldPath);
-    const newFull = path.join(path.dirname(oldFull), newName);
-
-    await fs.rename(oldFull, newFull);
-    res.json({ message: "Folder renamed" });
+    const { fullPath } = getSecurePath(id, folderPath);
+    const items = await fs.readdir(fullPath, { withFileTypes: true });
+    const result = items.map((item) => ({
+      name: item.name,
+      type: item.isDirectory() ? "folder" : "file",
+    }));
+    res.json(result);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Rename failed" });
+    res.status(500).json({ error: "Failed to load" });
+  }
+}
+
+async function createFolder(req, res) {
+  const { id } = req.params;
+  const { path: currentPath, folderName } = req.body;
+  try {
+    const { fullPath } = getSecurePath(id, path.join(currentPath, folderName));
+    await fs.mkdir(fullPath);
+    res.json({ message: "Created" });
+  } catch (err) {
+    res.status(500).json({ error: "Create failed" });
   }
 }
 
 async function deleteFolder(req, res) {
   const { id } = req.params;
   const { path: folderPath } = req.body;
-
   try {
-    const fullPath = path.join(getUserRoot(id), folderPath);
-    const files = await fs.readdir(fullPath);
-
-    if (files.length > 0) {
-      return res.status(400).json({ error: "Folder not empty" });
-    }
-
+    const { fullPath } = getSecurePath(id, folderPath);
     await fs.rmdir(fullPath);
-    res.json({ message: "Folder deleted" });
+    res.json({ message: "Deleted" });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Delete failed" });
+    res.status(400).json({ error: "NotEmpty or Error" });
   }
 }
 
-function upFolder(req, res) {
-  const { currentPath } = req.body;
-  const parentPath = path.dirname(currentPath);
-  res.json({ path: parentPath });
-}
-
-function breadcrumbs(req, res) {
-  const { path: folderPath = "" } = req.body;
-  const parts = folderPath.split("/").filter(Boolean);
-
-  const crumbs = parts.map((part, index) => ({
-    name: part,
-    path: parts.slice(0, index + 1).join("/"),
-  }));
-
-  res.json([{ name: "Root", path: "" }, ...crumbs]);
-}
-
-module.exports = {
-  showFolder,
-  renameFolder,
-  deleteFolder,
-  upFolder,
-  breadcrumbs,
-};
+module.exports = { showFolder, createFolder, deleteFolder };

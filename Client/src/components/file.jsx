@@ -1,43 +1,35 @@
-// pages/File.jsx
-// import { useParams } from "react-router-dom";
-// import { useEffect, useState } from "react";
-// // import { getFile } from "../api";
-
-// export default function File() {
-//   const { id } = useParams();
-//   const [file, setFile] = useState(null);
-
-//   useEffect(() => {
-//     async function load() {
-//       // const data = await getFile(id);  // TODO: server call
-//       // setFile(data);
-//     }
-//     load();
-//   }, [id]);
-
-//   return (
-//     <div>
-//       <h1>File {id}</h1>
-//       {!file ? <p>Loading...</p> : <pre>{JSON.stringify(file, null, 2)}</pre>}
-//     </div>
-//   );
-// }
-// src/components/File.js
 import React from "react";
-
-export default function File({ file, onClick }) {
+export default function File({ item, selected, onSelect }) {
   return (
     <div
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect(item);
+      }}
       style={{
-        display: "inline-block",
+        width: 100,
+        height: 100,
         margin: 10,
         padding: 10,
-        border: "1px solid #ccc",
+        borderRadius: 8,
         cursor: "pointer",
+        textAlign: "center",
+        border: selected ? "2px solid #2196F3" : "1px solid #ddd",
+        background: selected ? "#e3f2fd" : "white",
+        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
       }}
-      onClick={() => onClick(file)}
     >
-      📄 {file.name}
+      <div style={{ fontSize: 32 }}>📄</div>
+      <div
+        style={{
+          fontSize: 12,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {item.name}
+      </div>
     </div>
   );
 }

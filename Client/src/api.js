@@ -1,212 +1,95 @@
-// const BASE_URL = "http://localhost:3000";
-
-// export async function request(url, options = {}) {
-//   try {
-//     const response = await fetch(url, options);
-//     if (!response.ok) throw new Error("Failed to load todos");
-//     const data = await response.json();
-//     return data;
-//   } catch (err) {
-//     console.error(err.message);
-//   }
-// }
-
-// export async function getUserFolders() {
-//   const res = await fetch(`${BASE_URL}/users/1`);
-//   return res.json();
-// }
-
-// export async function createFolder(foldername) {
-//   const res = await fetch(
-//     `${BASE_URL}/users/1`, //${localStorage.getItem("currentUser")
-//     {
-//       method: "POST",
-//       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify({ path: foldername, isDirectory: true }),
-//     }
-//   );
-//   return res.json();
-// }
-
-// export async function getFolderContent(folderId) {
-//   // TODO: call server: GET /folders/:id
-// }
-
-// export async function getFile(fileId) {
-//   // TODO: call server: GET /files/:id
-// }
-// export async function deleteFolder(foldername) {
-//   const res = await fetch(`${BASE_URL}/users/1`, {
-//     method: "DELETE",
-//     headers: { "Content-Type": "application/json" },
-//     body: JSON.stringify({ path: foldername, isDirectory: true }),
-//   });
-//   return res.json();
-// }
-// export async function deleteFile(fileId) {
-//   // TODO: call server: DELETE /files/:id
-// }
-
-// export async function loginUser(data) {
-//   // TODO: POST /auth/login
-// }
-
-// export async function registerUser(data) {
-//   // TODO: POST /auth/register
-// }
-// src/api.js
-const BASE_URL = "http://localhost:3000"; // your server URL
-
-export async function getFolder(id, path = "") {
-  try {
-    const res = await fetch(`${BASE_URL}/${id}/folders/show`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: path ? path : undefined,
-    });
-    if (!res.ok) throw res;
-    return res.json();
-  } catch (err) {
-    return handleError(err);
-  }
-}
-
-export async function createFolder(id, path, name) {
-  try {
-    const res = await fetch(`${BASE_URL}/${id}/folders/rename`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ oldPath: path, newName: name }),
-    });
-    if (!res.ok) throw res;
-    return res.json();
-  } catch (err) {
-    return handleError(err);
-  }
-}
-
-export async function deleteFolder(id, path) {
-  try {
-    const res = await fetch(`${BASE_URL}/${id}/folders/delete`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ path }),
-    });
-    if (!res.ok) throw res;
-    return res.json();
-  } catch (err) {
-    return handleError(err);
-  }
-}
-
-export async function getFileInfo(id, path) {
-  try {
-    const res = await fetch(`${BASE_URL}/files/info`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ path }),
-    });
-    if (!res.ok) throw res;
-    return res.json();
-  } catch (err) {
-    return handleError(err);
-  }
-}
-
-export async function getFolderContent(folderId) {
-  // TODO: call server: GET /folders/:id
-}
-
-export async function getFile(fileId) {
-  // TODO: call server: GET /files/:id
-}
-export async function deleteFolder(foldername) {
-  const res = await fetch(
-    `${BASE_URL}/users/${localStorage.getItem("currentUser")}`,
-    {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ path: foldername, isDirectory: true }),
-    }
-  );
+const BASE_URL = "http://localhost:3000";
+const headers = { "Content-Type": "application/json" };
+const handle = async (res) => {
+  if (!res.ok) throw new Error((await res.text()) || "Error");
   return res.json();
-}
-export async function deleteFile(fileId) {
-  // TODO: call server: DELETE /files/:id
-}
+};
 
-export async function loginUser(data) {
-  const res = await fetch(`${BASE_URL}/login`, {
+export const loginUser = (data) =>
+  fetch(`${BASE_URL}/login`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify(data),
-  });
-
-  if (!res.ok) {
-    // handle errors
-    const text = await res.text();
-    throw new Error(text || "Login failed");
-  }
-
-  const userData = await res.json(); // parse JSON from response
-  console.log(userData);
-  // Save only the data, not the response object
-  localStorage.setItem("currentUser", JSON.stringify(userData));
-
-  return userData; // { username, id }
-}
-
-export async function registerUser(data) {
-  const res = await fetch(`${BASE_URL}/register`, {
+  }).then(handle);
+export const registerUser = (data) =>
+  fetch(`${BASE_URL}/register`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify(data),
-  });
+  }).then(handle);
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || "Registration failed");
-  }
+export const getFolder = (uid, path) =>
+  fetch(`${BASE_URL}/api/users/${uid}/folders/show`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ path }),
+  }).then(handle);
+export const createFolder = (uid, path, name) =>
+  fetch(`${BASE_URL}/api/users/${uid}/folders/create`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ path, folderName: name }),
+  }).then(handle);
+export const deleteFolder = (uid, path) =>
+  fetch(`${BASE_URL}/api/users/${uid}/folders/delete`, {
+    method: "DELETE",
+    headers,
+    body: JSON.stringify({ path }),
+  }).then(handle);
 
-  const userData = await res.json();
-  localStorage.setItem("currentUser", JSON.stringify(userData));
-  return userData;
-export async function showFile(id, path) {
-  try {
-    const res = await fetch(`${BASE_URL}/files/show`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ path }),
-    });
-    if (!res.ok) throw res;
-    return res.json();
-  } catch (err) {
-    return handleError(err);
-  }
-}
+export const getFileInfo = (uid, path) =>
+  fetch(
+    `${BASE_URL}/api/users/${uid}/files/info?path=${encodeURIComponent(path)}`
+  ).then(handle);
+export const renameItem = (uid, path, newName) =>
+  fetch(`${BASE_URL}/api/users/${uid}/files/rename`, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify({ currentPath: path, newName }),
+  }).then(handle);
+export const deleteFile = (uid, path) =>
+  fetch(`${BASE_URL}/api/users/${uid}/files/delete`, {
+    method: "DELETE",
+    headers,
+    body: JSON.stringify({ path }),
+  }).then(handle);
+export const copyItem = (uid, src, dest) =>
+  fetch(`${BASE_URL}/api/users/${uid}/files/copy`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ sourcePath: src, destinationPath: dest }),
+  }).then(handle);
+export const moveItem = (uid, src, dest) =>
+  fetch(`${BASE_URL}/api/users/${uid}/files/move`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ sourcePath: src, destinationPath: dest }),
+  }).then(handle);
 
-export async function deleteFile(id, path) {
-  try {
-    const res = await fetch(`${BASE_URL}/files/delete`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ path }),
-    });
-    if (!res.ok) throw res;
-    return res.json();
-  } catch (err) {
-    return handleError(err);
-  }
-}
+export const downloadFile = async (uid, path, name) => {
+  const res = await fetch(
+    `${BASE_URL}/api/users/${uid}/files/download?path=${encodeURIComponent(
+      path
+    )}`
+  );
+  if (!res.ok) throw new Error("Download failed");
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
+};
 
-// generic error handler
-async function handleError(err) {
-  let message = "Unknown error";
-  try {
-    const data = await err.json();
-    message = data.error || message;
-  } catch {
-    console.log("error");
-  }
-  return Promise.reject(message);
-}
+export const uploadFile = (uid, path, file) => {
+  const formData = new FormData();
+  formData.append("myFile", file);
+  formData.append("currentPath", path);
+  return fetch(`${BASE_URL}/api/users/${uid}/files/upload`, {
+    method: "POST",
+    body: formData,
+  }).then(handle);
+};

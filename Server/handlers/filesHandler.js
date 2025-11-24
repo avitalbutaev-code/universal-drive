@@ -1,115 +1,123 @@
 const fs = require("fs/promises");
 const path = require("path");
-
-const BASE_PATH = path.join(__dirname, "../../Database/UsersFolders");
-
-function getUserRoot(id) {
-  return path.join(BASE_PATH, id);
-}
+const { getSecurePath } = require("./pathUtils");
 
 async function getFileInfo(req, res) {
   const { id } = req.params;
-  const { path: filePath } = req.body;
+  const { path: filePath } = req.query;
 
   try {
-    const fullPath = path.join(getUserRoot(id), filePath);
+    const { fullPath } = getSecurePath(id, filePath);
     const stats = await fs.stat(fullPath);
-
     res.json({
       name: path.basename(fullPath),
       size: stats.size,
-      createdAt: stats.birthtime,
-      modifiedAt: stats.mtime,
+      created: stats.birthtime,
       isFile: stats.isFile(),
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to get file info" });
-  }
-}
-
-async function showFile(req, res) {
-  const { id } = req.params;
-  const { path: filePath } = req.body;
-
-  try {
-    const fullPath = path.join(getUserRoot(id), filePath);
-    const content = await fs.readFile(fullPath, "utf8");
-    res.json({ content });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to read file" });
+    res.status(500).json({ error: "Info failed" });
   }
 }
 
 async function renameFile(req, res) {
   const { id } = req.params;
-  const { oldPath, newName } = req.body;
-
+  const { currentPath, newName } = req.body;
   try {
-    const oldFull = path.join(getUserRoot(id), oldPath);
-    const newFull = path.join(path.dirname(oldFull), newName);
-
+    const { fullPath: oldFull } = getSecurePath(id, currentPath);
+    const { fullPath: newFull } = getSecurePath(
+      id,
+      path.join(path.dirname(currentPath), newName)
+    );
     await fs.rename(oldFull, newFull);
-    res.json({ message: "File renamed" });
+    res.json({ message: "Renamed" });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: "Rename failed" });
-  }
-}
-
-async function copyFile(req, res) {
-  const { id } = req.params;
-  const { sourcePath, targetPath } = req.body;
-
-  try {
-    const src = path.join(getUserRoot(id), sourcePath);
-    const dest = path.join(getUserRoot(id), targetPath);
-
-    await fs.copyFile(src, dest);
-    res.json({ message: "File copied" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Copy failed" });
-  }
-}
-
-async function moveFile(req, res) {
-  const { id } = req.params;
-  const { sourcePath, targetPath } = req.body;
-
-  try {
-    const src = path.join(getUserRoot(id), sourcePath);
-    const dest = path.join(getUserRoot(id), targetPath);
-
-    await fs.rename(src, dest);
-    res.json({ message: "File moved" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Move failed" });
   }
 }
 
 async function deleteFile(req, res) {
   const { id } = req.params;
   const { path: filePath } = req.body;
+  try {
+    const { fullPath } = getSecurePath(id, filePath);
+    await fs.unlink(fullPath);
+    res.json({ message: "Deleted" });
+  } catch (err) {
+    res.status(500).json({ error: "Delete failed" });
+  }
+}
+
+async function copyFile(req, res) {
+  const { id } = req.params;
+  const { sourcePath, destinationPath } = req.body;
+  try {
+    const { fullPath: src } = getSecurePath(id, sourcePath);
+    const fileName = path.basename(sourcePath);
+    const { fullPath: dest } = getSecurePath(
+      id,
+      path.join(destinationPath, fileName)
+    );
+    await fs.copyFile(src, dest);
+    res.json({ message: "Copied" });
+  } catch (err) {
+    res.status(500).json({ error: "Copy failed" });
+  }
+}
+
+async function moveFile(req, res) {
+  const { id } = req.params;
+  const { sourcePath, destinationPath } = req.body;
+  try {
+    const { fullPath: src } = getSecurePath(id, sourcePath);
+    const fileName = path.basename(sourcePath);
+    const { fullPath: dest } = getSecurePath(
+      id,
+      path.join(destinationPath, fileName)
+    );
+    await fs.rename(src, dest);
+    res.json({ message: "Moved" });
+  } catch (err) {
+    res.status(500).json({ error: "Move failed" });
+  }
+}
+
+async function downloadFile(req, res) {
+  const { id } = req.params;
+  const { path: filePath } = req.query;
+  try {
+    const { fullPath } = getSecurePath(id, filePath);
+    res.download(fullPath);
+  } catch (err) {
+    res.status(500).send("Error downloading");
+  }
+}
+
+async function uploadFile(req, res) {
+  const { id } = req.params;
+  const { currentPath } = req.body;
+  const file = req.file;
+  if (!file) return res.status(400).json({ error: "No file" });
 
   try {
-    const fullPath = path.join(getUserRoot(id), filePath);
-    await fs.unlink(fullPath);
-
-    res.json({ message: "File deleted" });
+    const { fullPath: dest } = getSecurePath(
+      id,
+      path.join(currentPath, file.originalname)
+    );
+    await fs.rename(file.path, dest);
+    res.json({ message: "Uploaded" });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Delete failed" });
+    await fs.unlink(file.path).catch(() => {});
+    res.status(500).json({ error: "Upload failed" });
   }
 }
 
 module.exports = {
   getFileInfo,
-  showFile,
   renameFile,
+  deleteFile,
   copyFile,
   moveFile,
-  deleteFile,
+  downloadFile,
+  uploadFile,
 };
