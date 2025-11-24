@@ -3,11 +3,12 @@ var router = express.Router();
 const fs = require("fs").promises;
 const path = require("path");
 const actions = require;
+
 // Load users folder
 router.get("/:id", async function (req, res, next) {
-  const id = Number(req.params.id);
-  if (!req.params.id || isNaN(id)) {
-    return res.status(404).send("inappropriate id");
+  const id = req.params.id;
+  if (!req.params.id) {
+    return res.status(404).send("no id");
   }
   try {
     const data = await fs.readFile(
@@ -18,7 +19,11 @@ router.get("/:id", async function (req, res, next) {
     const user = users.find((u) => u.id === id);
     if (user) {
       try {
-        const folderPath = user.folder;
+        const folderPath = path.join(
+          __dirname,
+          `../../Database/UsersFolders/${id}`
+        );
+        console.log(folderPath);
         const items = await fs.readdir(folderPath, { withFileTypes: true });
         const result = items.map((item) => ({
           name: item.name,
@@ -103,6 +108,7 @@ router.get("/:id/:path", async function (req, res, next) {
     res.status(500).send("server failed");
   }
 });
+
 router.post("/:id/:path", async function (req, res, next) {
   const id = Number(req.params.id);
   if (!req.params.id || isNaN(id)) {
