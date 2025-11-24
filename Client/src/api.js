@@ -9,11 +9,14 @@ export async function getUserFolders() {
 // TODO: call server: GET /folders
 
 export async function createFolder(foldername) {
-  const res = await fetch(`${BASE_URL}/users/1`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ path: foldername }),
-  });
+  const res = await fetch(
+    `${BASE_URL}/users/${localStorage.getItem("currentUser")}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: foldername }),
+    }
+  );
   return res.json();
 }
 
