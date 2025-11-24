@@ -10,11 +10,11 @@ export async function getUserFolders() {
 
 export async function createFolder(foldername) {
   const res = await fetch(
-    `${BASE_URL}/users/${localStorage.getItem("currentUser")}`,
+    `${BASE_URL}/users/1`, //${localStorage.getItem("currentUser")
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ path: foldername }),
+      body: JSON.stringify({ path: foldername, isDirectory: true }),
     }
   );
   return res.json();
@@ -31,7 +31,7 @@ export async function deleteFolder(foldername) {
   const res = await fetch(`${BASE_URL}/users/1`, {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ path: foldername }),
+    body: JSON.stringify({ path: foldername, isDirectory: true }),
   });
   return res.json();
 }

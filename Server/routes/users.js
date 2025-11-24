@@ -29,7 +29,7 @@ router.get("/:id", async function (req, res, next) {
       const items = await fs.readdir(folderPath, { withFileTypes: true });
       const result = items.map((item) => ({
         name: item.name,
-        type: item.isDirectory() ? true : false,
+        isDirectory: item.isDirectory() ? true : false,
       }));
       if (!items) res.status(500).json({ error: "no items" });
       res.json(result);

@@ -124,20 +124,18 @@ export default function Home() {
   useEffect(() => {
     async function load() {
       const data = await getUserFolders(); // TODO: server GET
-      setFolders(data);
+      await setFolders(data);
     }
     load();
   }, []);
 
   // Create a new folder
-  const handleCreateFolder = (e) => {
+  const handleCreateFolder = async (e) => {
     e.preventDefault();
     if (!newFolderName) return;
-
     createFolder(newFolderName); // TODO: server POST
-
     const newFolder = { id: Date.now(), name: newFolderName };
-    setFolders([...folders, newFolder]);
+    await setFolders([...folders, newFolder]);
     setNewFolderName("");
   };
 
@@ -188,7 +186,7 @@ export default function Home() {
         </form>
 
         {/* ------------------ FOLDERS LIST ------------------ */}
-        {/* <h2>Folders</h2>
+        <h2>Folders</h2>
         {folders.length === 0 ? (
           <p>No folders yet</p>
         ) : (
@@ -196,7 +194,6 @@ export default function Home() {
             {folders.map((f) => (
               <li key={f.id} style={{ marginBottom: "10px" }}>
                 <Link to={`/folders/${f.id}`}>{f.name}</Link>
-
                 <button
                   style={{ marginLeft: "10px" }}
                   onClick={() => handleDeleteFolder(f.name)}
@@ -206,7 +203,7 @@ export default function Home() {
               </li>
             ))}
           </ul>
-        )} */}
+        )}
 
         {/* ------------------ FILES LIST ------------------ */}
         {/* <h2>Files</h2>
