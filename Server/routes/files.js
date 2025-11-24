@@ -1,0 +1,10 @@
+const express = require("express");
+const router = express.Router();
+const files = require("../handlers/filesHandler");
+router.get("/info", files.getFileInfo);
+router.get("/show", files.showFile);
+router.put("/rename", files.renameFile);
+router.post("/copy", files.copyFile);
+router.post("/move", files.moveFile);
+router.delete("/delete", files.deleteFile);
+module.exports = router;

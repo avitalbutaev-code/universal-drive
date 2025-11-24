@@ -13,18 +13,31 @@
 //   );
 // }
 
-import { Link, useParams } from "react-router-dom";
+// import { Link, useParams } from "react-router-dom";
 
-export default function Navbar() {
-  const { user } = useParams(); // get current user from URL
+// export default function Navbar() {
+//   const { user } = useParams(); // get current user from URL
 
+//   return (
+//     <nav style={{ display: "flex", gap: "20px", padding: "20px" }}>
+//       <Link to={`/${user}/home`}>Home</Link>
+//       <Link to={`/${user}/home/folder`}>Folders</Link>
+//       <Link to={`/${user}/home/bin`}>Bin</Link>
+//       <Link to="/">Login</Link>
+//       <Link to="/register">Register</Link>
+//     </nav>
+//   );
+// }
+import React from "react";
+import { Link } from "react-router-dom";
+
+export default function NavBar() {
   return (
-    <nav style={{ display: "flex", gap: "20px", padding: "20px" }}>
-      <Link to={`/${user}/home`}>Home</Link>
-      <Link to={`/${user}/home/folder`}>Folders</Link>
-      <Link to={`/${user}/home/bin`}>Bin</Link>
-      <Link to="/">Login</Link>
-      <Link to="/register">Register</Link>
+    <nav style={{ padding: "10px", backgroundColor: "#eee" }}>
+      <Link to="/" style={{ marginRight: 20 }}>
+        Home
+      </Link>
+      <Link to="/bin">Bin</Link>
     </nav>
   );
 }

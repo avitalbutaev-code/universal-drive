@@ -1,29 +1,49 @@
-// App.jsx
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+// // App.jsx
+// import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+// import Home from "./pages/home";
+// import Folder from "./pages/folder";
+// import File from "./pages/file";
+// import Bin from "./pages/bin";
+// import Login from "./pages/login";
+// import Register from "./pages/register";
+// import Navbar from "./components/navbar";
+
+// export default function App() {
+//   return (
+//     <BrowserRouter>
+//       <Routes>
+//         <Route path="/" element={<Login />} />
+//         <Route path="/register" element={<Register />} />
+
+//         {/* Home layout with nested routes */}
+//         <Route path="/home" element={<Home />}>
+//           <Route path="folder/:folderId" element={<Folder />} />
+//           <Route path="file/:fileId" element={<File />} />
+//           <Route path="bin" element={<Bin />} />
+//         </Route>
+
+//         <Route path="*" element={<Navigate to="/" />} />
+//       </Routes>
+//     </BrowserRouter>
+//   );
+// }
+// src/App.js
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./pages/home";
-import Folder from "./pages/folder";
-import File from "./pages/file";
 import Bin from "./pages/bin";
-import Login from "./pages/login";
-import Register from "./pages/register";
-import Navbar from "./components/navbar";
+import NavBar from "./components/navbar";
 
-export default function App() {
+function App() {
   return (
-    <BrowserRouter>
+    <Router>
+      <NavBar />
       <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-
-        {/* Home layout with nested routes */}
-        <Route path="/home" element={<Home />}>
-          <Route path="folder/:folderId" element={<Folder />} />
-          <Route path="file/:fileId" element={<File />} />
-          <Route path="bin" element={<Bin />} />
-        </Route>
-
-        <Route path="*" element={<Navigate to="/" />} />
+        <Route path="/" element={<Home />} />
+        <Route path="/bin" element={<Bin />} />
       </Routes>
-    </BrowserRouter>
+    </Router>
   );
 }
+
+export default App;
