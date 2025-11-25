@@ -155,6 +155,7 @@ export default function Home({ user }) {
       style={{ padding: 20, fontFamily: "sans-serif" }}
       onClick={() => setSelected(null)}
     >
+      <h1>WELCOME 👽💚🪐</h1>
       <div
         style={{
           display: "flex",

@@ -9,7 +9,7 @@ import Login from "./pages/login";
 import Register from "./pages/register";
 import Home from "./pages/home";
 import NavBar from "./components/navbar";
-
+import "./App.css";
 export default function App() {
   const [user, setUser] = useState(null);
 

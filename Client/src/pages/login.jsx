@@ -32,7 +32,7 @@ export default function Login({ onLogin }) {
   return (
     <div style={containerStyle}>
       <form onSubmit={handleSubmit} style={formStyle}>
-        <h2>Cloud Drive Login ☁️</h2>
+        <h2>🪐🤍 UNIVERSAL Login 🤍🪐</h2>
 
         {error && <p style={errorStyle}>{error}</p>}
 
@@ -83,7 +83,7 @@ const containerStyle = {
   justifyContent: "center",
   alignItems: "center",
   minHeight: "100vh",
-  backgroundColor: "#f0f2f5",
+  backgroundColor: "#e7f6e3ff",
 };
 
 const formStyle = {
