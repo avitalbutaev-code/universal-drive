@@ -1,10 +1,15 @@
 import React from "react";
-export default function File({ item, selected, onSelect }) {
+
+export default function File({ item, selected, onSelect, onDoubleClick }) {
   return (
     <div
       onClick={(e) => {
         e.stopPropagation();
         onSelect(item);
+      }}
+      onDoubleClick={(e) => {
+        e.stopPropagation();
+        onDoubleClick(item);
       }}
       style={{
         width: 100,

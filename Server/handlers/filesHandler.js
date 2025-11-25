@@ -20,6 +20,33 @@ async function getFileInfo(req, res) {
   }
 }
 
+async function createFile(req, res) {
+  const { id } = req.params;
+  const { currentPath, fileName } = req.body;
+  const initialContent = "";
+
+  try {
+    const { fullPath } = getSecurePath(id, path.join(currentPath, fileName));
+    await fs.writeFile(fullPath, initialContent, "utf8");
+    res.json({ message: "File created" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "File creation failed" });
+  }
+}
+
+async function readFile(req, res) {
+  const { id } = req.params;
+  const { path: filePath } = req.query;
+
+  try {
+    const { fullPath } = getSecurePath(id, filePath);
+    const content = await fs.readFile(fullPath, "utf8");
+    res.json({ fileName: path.basename(fullPath), content });
+  } catch (err) {
+    res.status(500).json({ error: "File read failed" });
+  }
+}
 async function renameFile(req, res) {
   const { id } = req.params;
   const { currentPath, newName } = req.body;
@@ -51,6 +78,7 @@ async function deleteFile(req, res) {
 async function copyFile(req, res) {
   const { id } = req.params;
   const { sourcePath, destinationPath } = req.body;
+
   try {
     const { fullPath: src } = getSecurePath(id, sourcePath);
     const fileName = path.basename(sourcePath);
@@ -58,13 +86,14 @@ async function copyFile(req, res) {
       id,
       path.join(destinationPath, fileName)
     );
-    await fs.copyFile(src, dest);
+    await fs.cp(src, dest, { recursive: true });
+
     res.json({ message: "Copied" });
   } catch (err) {
-    res.status(500).json({ error: "Copy failed" });
+    console.error("Copy Error:", err.message);
+    res.status(500).json({ error: "Copy failed: " + err.message });
   }
 }
-
 async function moveFile(req, res) {
   const { id } = req.params;
   const { sourcePath, destinationPath } = req.body;
@@ -120,4 +149,6 @@ module.exports = {
   moveFile,
   downloadFile,
   uploadFile,
+  readFile,
+  createFile,
 };

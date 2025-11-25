@@ -11,6 +11,7 @@ export const loginUser = (data) =>
     headers,
     body: JSON.stringify(data),
   }).then(handle);
+
 export const registerUser = (data) =>
   fetch(`${BASE_URL}/register`, {
     method: "POST",
@@ -18,57 +19,57 @@ export const registerUser = (data) =>
     body: JSON.stringify(data),
   }).then(handle);
 
-export const getFolder = (uid, path) =>
-  fetch(`${BASE_URL}/api/users/${uid}/folders/show`, {
+export const getFolder = (id, path) =>
+  fetch(`${BASE_URL}/api/users/${id}/folders/show`, {
     method: "POST",
     headers,
     body: JSON.stringify({ path }),
   }).then(handle);
-export const createFolder = (uid, path, name) =>
-  fetch(`${BASE_URL}/api/users/${uid}/folders/create`, {
+export const createFolder = (id, path, name) =>
+  fetch(`${BASE_URL}/api/users/${id}/folders/create`, {
     method: "POST",
     headers,
     body: JSON.stringify({ path, folderName: name }),
   }).then(handle);
-export const deleteFolder = (uid, path) =>
-  fetch(`${BASE_URL}/api/users/${uid}/folders/delete`, {
+export const deleteFolder = (id, path) =>
+  fetch(`${BASE_URL}/api/users/${id}/folders/delete`, {
     method: "DELETE",
     headers,
     body: JSON.stringify({ path }),
   }).then(handle);
 
-export const getFileInfo = (uid, path) =>
+export const getFileInfo = (id, path) =>
   fetch(
-    `${BASE_URL}/api/users/${uid}/files/info?path=${encodeURIComponent(path)}`
+    `${BASE_URL}/api/users/${id}/files/info?path=${encodeURIComponent(path)}`
   ).then(handle);
-export const renameItem = (uid, path, newName) =>
-  fetch(`${BASE_URL}/api/users/${uid}/files/rename`, {
+export const renameItem = (id, path, newName) =>
+  fetch(`${BASE_URL}/api/users/${id}/files/rename`, {
     method: "PUT",
     headers,
     body: JSON.stringify({ currentPath: path, newName }),
   }).then(handle);
-export const deleteFile = (uid, path) =>
-  fetch(`${BASE_URL}/api/users/${uid}/files/delete`, {
+export const deleteFile = (id, path) =>
+  fetch(`${BASE_URL}/api/users/${id}/files/delete`, {
     method: "DELETE",
     headers,
     body: JSON.stringify({ path }),
   }).then(handle);
-export const copyItem = (uid, src, dest) =>
-  fetch(`${BASE_URL}/api/users/${uid}/files/copy`, {
+export const copyItem = (id, src, dest) =>
+  fetch(`${BASE_URL}/api/users/${id}/files/copy`, {
     method: "POST",
     headers,
     body: JSON.stringify({ sourcePath: src, destinationPath: dest }),
   }).then(handle);
-export const moveItem = (uid, src, dest) =>
-  fetch(`${BASE_URL}/api/users/${uid}/files/move`, {
+export const moveItem = (id, src, dest) =>
+  fetch(`${BASE_URL}/api/users/${id}/files/move`, {
     method: "POST",
     headers,
     body: JSON.stringify({ sourcePath: src, destinationPath: dest }),
   }).then(handle);
 
-export const downloadFile = async (uid, path, name) => {
+export const downloadFile = async (id, path, name) => {
   const res = await fetch(
-    `${BASE_URL}/api/users/${uid}/files/download?path=${encodeURIComponent(
+    `${BASE_URL}/api/users/${id}/files/download?path=${encodeURIComponent(
       path
     )}`
   );
@@ -84,12 +85,25 @@ export const downloadFile = async (uid, path, name) => {
   window.URL.revokeObjectURL(url);
 };
 
-export const uploadFile = (uid, path, file) => {
+export const uploadFile = (id, path, file) => {
   const formData = new FormData();
   formData.append("myFile", file);
   formData.append("currentPath", path);
-  return fetch(`${BASE_URL}/api/users/${uid}/files/upload`, {
+  return fetch(`${BASE_URL}/api/users/${id}/files/upload`, {
     method: "POST",
     body: formData,
   }).then(handle);
 };
+export const createFile = (userId, currentPath, fileName) =>
+  fetch(`${BASE_URL}/api/users/${userId}/files/create`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ currentPath, fileName }),
+  }).then(handle);
+
+export const readFile = (userId, path) =>
+  fetch(
+    `${BASE_URL}/api/users/${userId}/files/read?path=${encodeURIComponent(
+      path
+    )}`
+  ).then(handle);

@@ -10,7 +10,6 @@ router.post("/", async (req, res) => {
 
   try {
     const dbPath = path.join(__dirname, "../../Database/users.json");
-    // Create DB file if missing
     try {
       await fs.access(dbPath);
     } catch {
@@ -27,7 +26,6 @@ router.post("/", async (req, res) => {
     users.push(newUser);
 
     await fs.writeFile(dbPath, JSON.stringify(users, null, 2));
-    // Create physical folder
     await fs.mkdir(path.join(BASE_PATH, newUser.id), { recursive: true });
 
     res.send(newUser);

@@ -10,10 +10,13 @@ import {
   moveItem,
   downloadFile,
   uploadFile,
+  createFile,
+  readFile,
 } from "../api";
 import Folder from "../components/folder";
 import File from "../components/file";
 import Breadcrumbs from "../components/breadcrumbs";
+import FileViewer from "../components/FileView";
 
 export default function Home({ user }) {
   const [items, setItems] = useState([]);
@@ -21,6 +24,7 @@ export default function Home({ user }) {
   const [selected, setSelected] = useState(null);
   const [info, setInfo] = useState(null);
   const [clipboard, setClipboard] = useState(null);
+  const [viewerFile, setViewerFile] = useState(null);
   const fileInputRef = useRef(null);
 
   const refresh = async () => {
@@ -37,12 +41,28 @@ export default function Home({ user }) {
   }, [currentPath]);
 
   const handleCreate = async () => {
-    const name = prompt("Folder Name:");
-    if (name) {
+    const name = prompt("Item Name (Folder or File):");
+    if (!name) return;
+
+    if (name.includes(".")) {
+      await createFile(user.id, currentPath, name);
+    } else {
       await createFolder(user.id, currentPath, name);
-      refresh();
+    }
+    refresh();
+  };
+
+  const handleOpen = async (item) => {
+    if (item.type !== "file") return;
+    try {
+      const path = currentPath ? `${currentPath}/${item.name}` : item.name;
+      const data = await readFile(user.id, path);
+      setViewerFile(data);
+    } catch (err) {
+      alert("Could not open file: " + err.message);
     }
   };
+
   const handleDelete = async () => {
     if (!selected || !window.confirm(`Delete ${selected.name}?`)) return;
     const path = currentPath
@@ -53,6 +73,7 @@ export default function Home({ user }) {
       : await deleteFile(user.id, path);
     refresh();
   };
+
   const handleRename = async () => {
     const name = prompt("New Name:", selected?.name);
     if (!name || !selected) return;
@@ -70,14 +91,41 @@ export default function Home({ user }) {
       name: selected.name,
     });
   };
+
   const handlePaste = async () => {
     if (!clipboard) return;
-    clipboard.type === "copy"
-      ? await copyItem(user.id, clipboard.path, currentPath)
-      : await moveItem(user.id, clipboard.path, currentPath);
-    setClipboard(null);
-    refresh();
+
+    const sourceParentPath = clipboard.path.substring(
+      0,
+      clipboard.path.lastIndexOf("/")
+    );
+
+    if (clipboard.path === currentPath) {
+      alert(
+        "Cannot paste an item into its original location. Navigate to a different folder."
+      );
+      return;
+    }
+
+    if (clipboard.type === "copy" && sourceParentPath === currentPath) {
+      alert(
+        "Cannot copy item back into its immediate parent folder without renaming."
+      );
+      return;
+    }
+    try {
+      if (clipboard.type === "copy") {
+        await copyItem(user.id, clipboard.path, currentPath);
+      } else {
+        await moveItem(user.id, clipboard.path, currentPath);
+        setClipboard(null);
+      }
+      refresh();
+    } catch (err) {
+      alert(err.message);
+    }
   };
+
   const handleUpload = async (e) => {
     if (e.target.files[0]) {
       await uploadFile(user.id, currentPath, e.target.files[0]);
@@ -115,6 +163,18 @@ export default function Home({ user }) {
           marginBottom: 20,
         }}
       >
+        <button
+          onClick={() => {
+            const parts = currentPath.split("/");
+            parts.pop();
+            setCurrentPath(parts.join("/"));
+          }}
+          disabled={!currentPath}
+          style={btnStyle}
+        >
+          ⬆
+        </button>
+
         <div
           style={{
             flexGrow: 1,
@@ -125,15 +185,25 @@ export default function Home({ user }) {
         >
           <Breadcrumbs currentPath={currentPath} onNavigate={setCurrentPath} />
         </div>
-        <button onClick={() => fileInputRef.current.click()} style={btnStyle}>
+
+        <button
+          onClick={() => fileInputRef.current.click()}
+          style={{ ...btnStyle, background: "#4CAF50", color: "#fff" }}
+        >
           ☁ Upload
         </button>
-        <input type="file" ref={fileInputRef} hidden onChange={handleUpload} />
+        <form action="/upload" method="post" encType="multipart/form-data">
+          <input
+            type="file"
+            ref={fileInputRef}
+            hidden
+            onChange={handleUpload}
+          />
+        </form>
         <button onClick={handleCreate} style={btnStyle}>
-          + Folder
+          + New Item
         </button>
       </div>
-
       <div
         style={{
           padding: 10,
@@ -173,6 +243,12 @@ export default function Home({ user }) {
             </button>
             {selected.type === "file" && (
               <>
+                <button
+                  onClick={() => handleOpen(selected)}
+                  style={{ ...btnStyle, background: "#FFC107" }}
+                >
+                  Open
+                </button>{" "}
                 <button onClick={handleInfo} style={btnStyle}>
                   Info
                 </button>
@@ -186,7 +262,6 @@ export default function Home({ user }) {
           <span style={{ color: "#999" }}>Select item for actions</span>
         )}
       </div>
-
       <div style={{ display: "flex", flexWrap: "wrap" }}>
         {items.map((i) =>
           i.type === "folder" ? (
@@ -205,35 +280,39 @@ export default function Home({ user }) {
               item={i}
               selected={selected?.name === i.name}
               onSelect={setSelected}
+              onDoubleClick={handleOpen}
             />
           )
         )}
       </div>
-
       {info && (
-        <div
-          style={{
-            position: "fixed",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%,-50%)",
-            background: "white",
-            padding: 30,
-            border: "1px solid #000",
-          }}
-        >
+        <div style={modalStyle}>
           <h3>Info</h3>
           <p>Size: {info.size}</p>
-          <p>Created: {info.created}</p>
+          <p>Created: {new Date(info.created).toLocaleString()}</p>
           <button onClick={() => setInfo(null)}>Close</button>
         </div>
       )}
+      <FileViewer file={viewerFile} onClose={() => setViewerFile(null)} />{" "}
     </div>
   );
 }
+
 const btnStyle = {
   padding: "6px 12px",
   cursor: "pointer",
   borderRadius: 4,
   border: "1px solid #ccc",
+  background: "white",
+};
+const modalStyle = {
+  position: "fixed",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  background: "white",
+  padding: "20px",
+  boxShadow: "0 0 10px rgba(0,0,0,0.5)",
+  borderRadius: "8px",
+  zIndex: 1000,
 };

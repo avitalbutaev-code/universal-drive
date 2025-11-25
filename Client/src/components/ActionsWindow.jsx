@@ -1,4 +1,3 @@
-// src/components/ActionsWindow.js
 import React from "react";
 
 export default function ActionsWindow({ onClose, actions }) {

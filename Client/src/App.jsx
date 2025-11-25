@@ -21,9 +21,9 @@ export default function App() {
     handleSaved();
   }, []);
 
-  const handleLogin = (u) => {
-    setUser(u);
-    localStorage.setItem("drive_user", JSON.stringify(u));
+  const handleLogin = (user) => {
+    setUser(user);
+    localStorage.setItem("drive_user", JSON.stringify(user));
   };
   const handleLogout = () => {
     setUser(null);
@@ -37,12 +37,12 @@ export default function App() {
         <Route
           path="/"
           element={
-            user ? <Navigate to="/drive" /> : <Login onLogin={handleLogin} />
+            user ? <Navigate to="/home" /> : <Login onLogin={handleLogin} />
           }
         />
         <Route path="/register" element={<Register onLogin={handleLogin} />} />
         <Route
-          path="/drive"
+          path="/home"
           element={user ? <Home user={user} /> : <Navigate to="/" />}
         />
       </Routes>

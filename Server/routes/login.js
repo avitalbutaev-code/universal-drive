@@ -23,6 +23,7 @@ router.post("/", async function (req, res, next) {
     if (user.password !== req.body.password) {
       return res.status(500).send("failed to login");
     }
+    console.log(` username: ${username}, id: ${user.id} `);
     res.send({ username: username, id: user.id });
   } catch (err) {
     console.error(err);
